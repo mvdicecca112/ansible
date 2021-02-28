@@ -1,0 +1,67 @@
+---
+
+- hosts: all
+  tasks:
+    #wget files
+    - name: Download fahclient
+      get_url:
+        url: https://download.foldingathome.org/releases/public/release/fahclient/centos-6.7-64bit/v7.6/fahclient-7.6.21-1.x86_64.rpm
+        dest: /tmp/fahclient-7.6.21-1.x86_64.rpm   
+
+    - name: Download fahcontrol
+      get_url:
+        url: https://download.foldingathome.org/releases/public/release/fahcontrol/centos-6.7-64bit/v7.6/fahcontrol-7.6.21-1.noarch.rpm
+        dest: /tmp/fahcontrol-7.6.21-1.noarch.rpm
+
+    - name: Download fahviewer
+      get_url:
+        url: https://download.foldingathome.org/releases/public/release/fahviewer/centos-6.7-64bit/v7.6/fahviewer-7.6.21-1.x86_64.rpm
+        dest: /tmp/fahviewer-7.6.21-1.x86_64.rpm   
+
+    #force install with --no-deps
+    - name: Install F@H Client
+      shell: rpm -i --nodeps /tmp/fahclient-7.6.21-1.x86_64.rpm   
+
+    - name: Install F@H Control
+      shell: rpm -i --nodeps /tmp/fahcontrol-7.6.21-1.noarch.rpm   
+
+    - name: Install F@H Viewer
+      shell: rpm -i --nodeps /tmp/fahviewer-7.6.21-1.x86_64.rpm
+
+    #create config file after backup
+    - name: Creating config file
+      copy:
+        dest: "/etc/fahclient/config.xml"
+        content: |
+          <config>
+          <!-- Folding Slot Configuration -->
+          <gpu v="false"/>
+
+          <!-- Slot Control -->
+          <power v="full"/>
+
+          <!-- User Information -->
+          <passkey v="d3d983ca81dcf777d3d983ca81dcf777"/>
+          <team v="38296"/>
+          <user v="dicecca112"/>
+
+          <!-- Network -->
+          <proxy-enable v="false"/>
+          <proxy v=""/>
+          <proxy-user v=""/>
+          <proxy-pass v=""/>
+
+          <!-- Folding Slots -->
+          <slot id='0' type='CPU'/>
+          <client-type v=""/>
+
+          <!-- Remote Command Server -->
+          <command-allow v="127.0.0.1 0.0.0.0/0"/>
+          <password v="password@123"/>
+
+          <!-- Web Server -->
+          <web-allow v="0.0.0.0/0"/>
+
+          <!-- Work Unit Control -->
+          <next-unit-percentage v="90"/>
+          </config>
