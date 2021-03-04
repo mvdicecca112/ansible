@@ -25,5 +25,3 @@
           - UpdateRollups
         reboot: yes
         log_path: E:\Win_Template_Patch.log
- 
-
