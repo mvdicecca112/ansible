@@ -2,6 +2,12 @@
 
 - hosts: all
   tasks:
+    #update photon OS
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
     #wget files
     - name: Download fahclient
       get_url:
@@ -18,15 +24,25 @@
         url: https://download.foldingathome.org/releases/public/release/fahviewer/centos-6.7-64bit/v7.6/fahviewer-7.6.21-1.x86_64.rpm
         dest: /tmp/fahviewer-7.6.21-1.x86_64.rpm   
 
+
     #force install with --no-deps
     - name: Install F@H Client
-      shell: rpm -i --nodeps /tmp/fahclient-7.6.21-1.x86_64.rpm   
+      yum:
+        name: /tmp/fahclient-7.6.21-1.x86_64.rpm   
+        state: present
+        skip_broken: yes
 
     - name: Install F@H Control
-      shell: rpm -i --nodeps /tmp/fahcontrol-7.6.21-1.noarch.rpm   
+      yum:
+        name: /tmp/fahcontrol-7.6.21-1.x86_64.rpm   
+        state: present
+        skip_broken: yes
 
     - name: Install F@H Viewer
-      shell: rpm -i --nodeps /tmp/fahviewer-7.6.21-1.x86_64.rpm
+      yum:
+        name: /tmp/fahviewer-7.6.21-1.x86_64.rpm
+        state: present
+        skip_broken: yes
 
     #create config file after backup
     - name: Creating config file
@@ -57,7 +73,7 @@
 
           <!-- Remote Command Server -->
           <command-allow v="127.0.0.1 0.0.0.0/0"/>
-          <password v="password@123"/>
+          <password v="s@ucimus8684"/>
 
           <!-- Web Server -->
           <web-allow v="0.0.0.0/0"/>
