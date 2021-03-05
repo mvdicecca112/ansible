@@ -1,0 +1,10 @@
+[win]
+host1
+host2
+
+[win:vars]
+ansible_user="Administrator"
+ansible_password="P@ssword"
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore
+ansible_port=5986                
