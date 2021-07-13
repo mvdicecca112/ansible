@@ -1,0 +1,108 @@
+---
+
+- hosts: all
+  tasks:
+    #update CentoS Stream
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+    
+    # reboot
+    - name: Reboot a Linux machine 
+      reboot:
+        test_command: uptime
+
+      # disable firewalld
+    - name: enable a timer for dnf-automatic
+      systemd:
+        name: firewalld
+        state: stopped
+        enabled: false
+
+    - name: Disable SELinux
+      ansible.posix.selinux:
+        state: disabled
+
+    - name: Disable SWAP since kubernetes can't work with swap enabled (1/2)
+      shell: |
+        swapoff -a
+      
+    # remove from /etc/fstab
+    - name: Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    # reboot
+    - name: Reboot a Linux machine 
+      reboot:
+        test_command: uptime
+
+    - name: install k3s
+      shell: | 
+        curl -sfL https://get.k3s.io | sudo bash -
+
+    #install AWX Operator
+    - name: Install AWX Operator
+      shell: |
+        kubectl apply -f https://raw.githubusercontent.com/ansible/awx-operator/devel/deploy/awx-operator.yaml
+
+    # wait 5 minutes
+
+    - name: Pause for 5 minutes
+      pause:
+        minutes: 5
+
+    - name: Create public-static-pvc.yaml
+      copy:
+        dest: "public-static-pvc.yml"
+        content: |
+          ---
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: public-static-data-pvc
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            storageClassName: local-path
+            resources:
+              requests:
+                storage: 1Gi
+
+    #apply configuration manifest
+    - name: apply configuration manifest
+      shell: |
+        kubectl apply -f public-static-pvc.yml
+
+    - name: Pause for 5 minutes
+      pause:
+        minutes: 5  
+
+    #create awx deployment firewalld
+    - name: Create public-static-pvc.yaml
+      copy:
+        dest: "awx-instance-deployment.yml"
+        content: |
+          ---
+          apiVersion: awx.ansible.com/v1beta1
+          kind: AWX
+          metadata:
+            name: awx
+          spec:
+            service_type: nodeport
+            projects_persistence: true
+            projects_storage_access_mode: ReadWriteOnce
+            web_extra_volume_mounts: |
+              - name: static-data
+                mountPath: /var/lib/awx/public
+            extra_volumes: |
+              - name: static-data
+                persistentVolumeClaim:
+                  claimName: public-static-data-pvc
+    
+    - name: apply configuration manifest
+      shell: |
+        kubectl apply -f awx-instance-deployment.yml
