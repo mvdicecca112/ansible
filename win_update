@@ -1,0 +1,16 @@
+---
+- hosts: all
+  gather_facts: false
+  tasks:
+  - name: Search and Download do not install
+    win_updates:
+      state: downloaded
+  - name: Install all Security, Critical, and rollup updates 
+    win_updates:
+      server_selection: windows_update
+      category_name:
+        - SecurityUpdates
+        - CriticalUpdates
+        - UpdateRollups
+      reboot: yes
+      log_path E:\Win_Updates_Patch.log
