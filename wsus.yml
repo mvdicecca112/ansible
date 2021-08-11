@@ -1,0 +1,12 @@
+
+---
+- name: approve wsus alerts
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: approve wsus alerts
+      win_shell: | 
+       Get-WsusUpdate -Classification All -Approval Unapproved -Status Any | Approve-WsusUpdate -Action Install -TargetGroupName "All Computers"
+       Get-WsusUpdate -Classification Security -Approval Unapproved -Status Any | Approve-WsusUpdate -Action Install -TargetGroupName "All Computers"
+       Get-WsusUpdate -Classification Critical -Approval Unapproved -Status Any | Approve-WsusUpdate -Action Install -TargetGroupName "All Computers"
+       Get-WsusUpdate -Classification WSUS -Approval Unapproved -Status Any | Approve-WsusUpdate -Action Install -TargetGroupName "All Computers"
