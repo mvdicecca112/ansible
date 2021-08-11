@@ -13,4 +13,4 @@
         - CriticalUpdates
         - UpdateRollups
       reboot: yes
-      log_path E:\Win_Updates_Patch.log
+      log_path: E:\Win_Updates_Patch.log
