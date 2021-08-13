@@ -28,6 +28,8 @@
       yum:
         name: foreman-installer
         state: present
+        validate_certs: no
+        disable_gpg_check: yes
 
     - name: Run foreman installer
       shell:
