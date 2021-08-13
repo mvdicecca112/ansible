@@ -41,3 +41,8 @@
         permanent: yes
         immediate: yes
         state: enabled
+    
+    - name: Reload firewalld 
+      systemd:
+        name: firewalld
+        state: reloaded
