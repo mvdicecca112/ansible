@@ -6,6 +6,7 @@
       yum:
         name: 'https://yum.puppet.com/puppet6-release-el-8.noarch.rpm'
         state: present
+        validate_certs: no
 
     - name: Reset ruby module
       shell:
@@ -19,6 +20,7 @@
       yum:
         name: 'https://yum.theforeman.org/releases/2.5/el8/x86_64/foreman-release.rpm'
         state: present
+        validate_certs: no
 
     - name: Download Foreman installer
       yum:
