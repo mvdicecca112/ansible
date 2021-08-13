@@ -39,4 +39,5 @@
       firewalld:
         port: 8443/tcp
         permanent: yes
+        immediate: yes
         state: enabled
