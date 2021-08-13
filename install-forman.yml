@@ -1,6 +1,6 @@
 ---
 
-- hosts: foreman.kgas.local
+- hosts: foreman
   tasks:
     - name: Install Puppet
       yum:
