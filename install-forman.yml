@@ -1,0 +1,30 @@
+---
+
+- hosts: foreman.kgas.local
+  tasks:
+    - name: Install Puppet
+      yum:
+        name: 'https://yum.puppet.com/puppet6-release-el-8.noarch.rpm'
+        state: present
+
+    - name: Reset ruby module
+      shell:
+        cmd: dnf module reset ruby
+
+    - name: Enable ruby module
+      shell:
+        cmd: dnf module enable ruby:2.7
+
+    - name: Enable Forman Repo
+      yum:
+        name: 'https://yum.theforeman.org/releases/2.5/el8/x86_64/foreman-release.rpm'
+        state: present
+
+    - name: Download Foreman installer
+      yum:
+        name: foreman-installer
+        state: present
+
+    - name: Run foreman installer
+      shell:
+        cmd: foreman-installer
