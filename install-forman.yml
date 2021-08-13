@@ -15,7 +15,7 @@
 
     - name: Enable ruby module
       shell:
-        cmd: dnf module enable ruby:2.7
+        cmd: dnf -y module enable ruby:2.7
 
     - name: Enable Forman Repo
       yum:
