@@ -1,0 +1,25 @@
+---
+
+- hosts: all
+  tasks:
+    - name: disable selinux
+      selinux:
+        state: disabled
+          
+    - name: Run pihole installer
+      shell:
+        cmd: curl -sSL https://install.pi-hole.net | bash
+
+    - name: install unbound
+      yum:
+        name: unbound
+        state: latest
+
+    - name: get root hints
+      shell:
+        cmd: https://www.internic.net/domain/named.root -qO- | sudo tee /var/lib/unbound/root.hints
+
+    - name: Restart unbound
+      systemd:
+        name: unbound
+        state: restarted
