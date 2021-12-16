@@ -1,0 +1,149 @@
+---
+
+- hosts: all
+  tasks:
+
+#### Reworking to work with new Version of AWX Operator ####
+
+    #update Rocky Linux OS
+    - name: Upgrade all packages
+      yum:
+        name: '*'
+        state: latest
+
+      # disable firewalld
+    - name: enable a timer for dnf-automatic
+      systemd:
+        name: firewalld
+        state: stopped
+        enabled: false
+
+    - name: Disable SELinux
+      selinux:
+        state: disabled
+
+    - name: Disable SWAP since kubernetes can't work with swap enabled (1/2)
+      shell: |
+        swapoff -a
+
+    # remove from /etc/fstab
+    - name: Disable SWAP in fstab since kubernetes can't work with swap enabled (2/2)
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: install k3s
+      shell: |
+        curl -sfL https://get.k3s.io | sudo bash -
+
+    #### verify that K3S is running
+
+    #Install Git
+    - name: Install Git
+      yum:
+        name: git 
+        state: latest
+
+    #Install jq
+    - name: Install jq
+      yum:
+        name: jq 
+        state: latest
+
+    #Install make
+    - name: Install make
+      yum:
+        name: make 
+        state: latest
+
+    #Clone AWX Operator Repo
+    - name: Clone AWX Operator Repo
+      git:
+        repo: https://github.com/ansible/awx-operator.git
+        dest: /src/operator
+        separate_git_dir: /src/awx-operator.git
+
+    - name: Create Namespace
+      shell:  |
+        export NAMESPACE=awx
+
+    - name: kubectl create namespace
+      shell:
+        kubectl create ns ${NAMESPACE}
+
+    - name: set current context to Namespace
+      shell:
+        kubectl config set-context --current --namespace=$NAMESPACE 
+
+    - name: Set Release
+      shell:  |
+        RELEASE_TAG=`curl -s https://api.github.com/repos/ansible/awx-operator/releases/latest | grep tag_name | cut -d '"' -f 4`
+
+    - name: Checkout 
+      shell: |
+        git checkout $RELEASE_TAG
+
+    - name: Deploy AWX
+      shell:  |
+        export NAMESPACE=awx
+
+    - name: Make
+      shell |
+        make deploy
+
+    - name: Pause for 5 minutes
+      pause:
+        minutes: 5
+
+    - name: Create public-static-pvc.yaml
+      copy:
+        dest: "public-static-pvc.yml"
+        content: |
+          ---
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: public-static-data-pvc
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            storageClassName: local-path
+            resources:
+              requests:
+                storage: 1Gi
+
+    #apply configuration manifest
+    - name: apply configuration manifest
+      shell: |
+        kubectl apply -f public-static-pvc.yml -n awx
+
+    - name: Pause for 5 minutes
+      pause:
+        minutes: 5
+
+    #create awx deployment firewalld
+    - name: Create public-static-pvc.yaml
+      copy:
+        dest: "awx-instance-deployment.yml"
+        content: |
+          ---
+          apiVersion: awx.ansible.com/v1beta1
+          kind: AWX
+          metadata:
+            name: awx
+          spec:
+            service_type: nodeport
+            projects_persistence: true
+            projects_storage_access_mode: ReadWriteOnce
+            web_extra_volume_mounts: |
+              - name: static-data
+                mountPath: /var/lib/awx/public
+            extra_volumes: |
+              - name: static-data
+                persistentVolumeClaim:
+                  claimName: public-static-data-pvc
+
+    - name: apply configuration manifest
+      shell: |
+        kubectl apply -f awx-instance-deployment.yml -n awx
